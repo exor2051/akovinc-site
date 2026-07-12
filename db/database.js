@@ -1,35 +1,78 @@
-const Database = require('better-sqlite3');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
-// Render'da /var/data kalıcıdır, deploy'da silinmez
-const dataDir = process.env.NODE_ENV === 'production' ? '/var/data' : __dirname;
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+const DATA_FILE = path.join(__dirname, 'data.json');
 
-const dbPath = path.join(dataDir, 'akovinc.db');
-const db = new Database(dbPath);
+const defaults = {
+    users: [{ id: 1, username: 'admin', password: require('bcryptjs').hashSync('123456', 10) }],
+    content: [{ id: 1, title: 'Ako Vinç Hizmetleri', description: 'Ağır yüklerinizi güvenle taşıyor, projelerinize güç katıyoruz.', whatsapp: '905551234567', phone: '0212 555 12 34', email: '', address: '', working_hours: '', facebook: '', instagram: '', twitter: '', youtube: '', bg_image: '', primary_color: '#f39c12', secondary_color: '#1a252f' }],
+    services: [],
+    gallery: [],
+    testimonials: [],
+    hero_slides: [],
+    seo: [{ page: 'home', meta_title: 'Ako Vinç - Profesyonel Vinç Hizmetleri', meta_description: 'Ako Vinç ile ağır yüklerinizi güvenle taşıyın.', meta_keywords: 'vinç, vinç kiralama, sepetli vinç, mobil vinç' }]
+};
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+class DB {
+    constructor() {
+        this.data = {};
+        this.load();
+    }
 
-db.exec(`
-    CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT);
-    CREATE TABLE IF NOT EXISTS content (id INTEGER PRIMARY KEY, title, description, whatsapp, phone, email, address, working_hours, facebook, instagram, twitter, youtube, bg_image, primary_color, secondary_color);
-    CREATE TABLE IF NOT EXISTS services (id INTEGER PRIMARY KEY AUTOINCREMENT, title, description, image);
-    CREATE TABLE IF NOT EXISTS gallery (id INTEGER PRIMARY KEY, image, caption, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
-    CREATE TABLE IF NOT EXISTS testimonials (id INTEGER PRIMARY KEY AUTOINCREMENT, name, company, comment, rating INTEGER DEFAULT 5, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
-    CREATE TABLE IF NOT EXISTS hero_slides (id INTEGER PRIMARY KEY AUTOINCREMENT, image, title, subtitle, sort_order INTEGER DEFAULT 0);
-    CREATE TABLE IF NOT EXISTS seo (id INTEGER PRIMARY KEY, page UNIQUE, meta_title, meta_description, meta_keywords);
-`);
+    load() {
+        try {
+            const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+            this.data = JSON.parse(raw);
+        } catch {
+            this.data = JSON.parse(JSON.stringify(defaults));
+            this.save();
+        }
+    }
 
-// Seed - ilk kullanıcıyı ekle
-const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get();
-if (userCount.c === 0) {
-    const bcrypt = require('bcryptjs');
-    db.prepare('INSERT INTO users (id, username, password) VALUES (1, ?, ?)').run('admin', bcrypt.hashSync('123456', 10));
-    db.prepare('INSERT INTO content (id, title, description, whatsapp, phone, primary_color, secondary_color) VALUES (1, ?, ?, ?, ?, ?, ?)').run('Ako Vinç Hizmetleri', 'Ağır yüklerinizi güvenle taşıyor, projelerinize güç katıyoruz.', '905551234567', '0212 555 12 34', '#f39c12', '#1a252f');
-    db.prepare('INSERT INTO seo (page, meta_title, meta_description, meta_keywords) VALUES (?, ?, ?, ?)').run('home', 'Ako Vinç - Profesyonel Vinç Hizmetleri', 'Ako Vinç ile ağır yüklerinizi güvenle taşıyın.', 'vinç, vinç kiralama');
-    console.log('✅ Seed verileri eklendi');
+    save() {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+    }
+
+    get(table) { return this.data[table] || []; }
+    find(table, fn) { return this.get(table).find(fn) || null; }
+    add(table, item) {
+        const arr = this.get(table);
+        if (arr.length > 0) {
+            const maxId = arr.reduce((max, x) => Math.max(max, x.id || 0), 0);
+            item.id = maxId + 1;
+        } else {
+            item.id = 1;
+        }
+        if (!item.created_at) item.created_at = new Date().toISOString();
+        arr.push(item);
+        this.data[table] = arr;
+        this.save();
+        return item;
+    }
+    update(table, fn, updates) {
+        const arr = this.get(table);
+        const idx = arr.findIndex(fn);
+        if (idx === -1) return null;
+        arr[idx] = { ...arr[idx], ...updates };
+        this.data[table] = arr;
+        this.save();
+        return arr[idx];
+    }
+    remove(table, fn) {
+        const arr = this.get(table);
+        const idx = arr.findIndex(fn);
+        if (idx === -1) return false;
+        arr.splice(idx, 1);
+        this.data[table] = arr;
+        this.save();
+        return true;
+    }
+    first(table) { return this.get(table)[0] || null; }
+    all(table, sortFn) {
+        const arr = this.get(table);
+        if (sortFn) return arr.sort(sortFn);
+        return arr;
+    }
 }
 
-module.exports = db;
+module.exports = new DB();

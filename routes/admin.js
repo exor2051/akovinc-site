@@ -7,7 +7,6 @@ const crypto = require('crypto');
 const db = require('../db/database');
 const auth = require('../middleware/auth');
 
-
 const storage = multer.diskStorage({
     destination: './public/uploads/',
     filename: (req, file, cb) => {
@@ -22,23 +21,36 @@ const upload = multer({
     fileFilter: (req, file, cb) => {
         const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
         const ext = path.extname(file.originalname).toLowerCase();
-        if (allowed.includes(ext) && file.mimetype.startsWith('image/')) cb(null, true);
-        else cb(new Error('Sadece JPG, PNG, GIF ve WEBP dosyaları yüklenebilir!'));
+        if (allowed.includes(ext) && file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Sadece JPG, PNG, GIF ve WEBP dosyaları yüklenebilir!'));
+        }
     }
 });
 
-router.get('/login', (req, res) => res.render('admin/login', { error: null }));
+router.get('/login', (req, res) => {
+    res.render('admin/login', { error: null });
+});
 
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) return res.render('admin/login', { error: 'Kullanıcı adı ve şifre gereklidir!' });
-    try { const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username); if (user && bcrypt.compareSync(password, user.password)) {
+    if (!username || !password) {
+        return res.render('admin/login', { error: 'Kullanıcı adı ve şifre gereklidir!' });
+    }
+    try {
+        const user = db.find('users', u => u.username === username);
+        if (user && bcrypt.compareSync(password, user.password)) {
             req.session.userId = user.id;
             return res.redirect('/admin/dashboard');
-        } } catch {} res.render('admin/login', { error: 'Hatalı kullanıcı adı veya şifre!' });
+        }
+    } catch (_) { }
+    res.render('admin/login', { error: 'Hatalı kullanıcı adı veya şifre!' });
 });
 
-router.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/admin/login')));
+router.get('/logout', (req, res) => {
+    req.session.destroy(() => res.redirect('/admin/login'));
+});
 
 const publicPaths = ['/login'];
 router.use((req, res, next) => {
@@ -48,89 +60,134 @@ router.use((req, res, next) => {
 
 router.get('/dashboard', (req, res) => {
     try {
-        const contentRow = db.prepare('SELECT * FROM content WHERE id = 1').get() || { title: 'Ako Vinç Hizmetleri', description: '', whatsapp: '905551234567', phone: '0212 555 12 34', email: '', address: '', working_hours: '', facebook: '', instagram: '', twitter: '', youtube: '', bg_image: '', primary_color: '#f39c12', secondary_color: '#1a252f' };
-        const servicesRows = db.prepare('SELECT * FROM services').all() || [];
-        const testimonialRows = db.prepare('SELECT * FROM testimonials ORDER BY created_at DESC').all() || [];
-        const galleryRows = db.prepare('SELECT * FROM gallery ORDER BY created_at DESC').all() || [];
-        const slideRows = db.prepare('SELECT * FROM hero_slides ORDER BY sort_order ASC').all() || [];
-        const seoRow = db.prepare('SELECT * FROM seo WHERE page = ?').get('home') || {};
+        const siteData = db.first('content') || { title: 'Ako Vinç', description: '', whatsapp: '', phone: '', email: '', address: '', working_hours: '', facebook: '', instagram: '', twitter: '', youtube: '', bg_image: '', primary_color: '#f39c12', secondary_color: '#1a252f' };
+
         const errorMsg = req.query.err === 'wrong-password' ? 'Mevcut şifrenizi yanlış girdiniz!' : null;
         const successMsg = req.query.msg === 'saved' ? 'Değişiklikler kaydedildi!' : null;
-        res.render('admin/dashboard', { content: contentRow, services: servicesRows, testimonials: testimonialRows, gallery: galleryRows, slides: slideRows, seo: seoRow, errorMsg, successMsg, activeTab: req.query.tab || 'genel' });
-    } catch (e) {
-        res.render('admin/login', { error: 'Veritabanı hatası: ' + e.message });
+
+        res.render('admin/dashboard', {
+            content: siteData,
+            services: db.get('services'),
+            testimonials: db.all('testimonials', (a, b) => new Date(b.created_at) - new Date(a.created_at)),
+            gallery: db.all('gallery', (a, b) => new Date(b.created_at) - new Date(a.created_at)),
+            slides: db.all('hero_slides', (a, b) => a.sort_order - b.sort_order),
+            seo: db.find('seo', s => s.page === 'home') || {},
+            errorMsg,
+            successMsg,
+            activeTab: req.query.tab || 'genel'
+        });
+    } catch {
+        res.render('admin/login', { error: 'Veritabanı bağlantı hatası.' });
     }
 });
 
 router.post('/update', upload.fields([{ name: 'bgGorsel', maxCount: 1 }, { name: 'logoGorsel', maxCount: 1 }]), (req, res) => {
     try {
-        const row = db.prepare('SELECT bg_image FROM content WHERE id = 1').get();
-        const bgImage = req.files?.bgGorsel?.[0]?.filename || row?.bg_image || '';
-        db.prepare('UPDATE content SET title=?,description=?,whatsapp=?,phone=?,email=?,address=?,working_hours=?,facebook=?,instagram=?,twitter=?,youtube=?,bg_image=?,primary_color=?,secondary_color=? WHERE id=1').run(
-            req.body.title || '', req.body.description || '', req.body.whatsapp || '', req.body.phone || '', req.body.email || '', req.body.address || '', req.body.working_hours || '', req.body.facebook || '', req.body.instagram || '', req.body.twitter || '', req.body.youtube || '', bgImage, req.body.primary_color || '#f39c12', req.body.secondary_color || '#1a252f');
+        const existing = db.first('content');
+        const bgImage = req.files?.bgGorsel?.[0]?.filename || existing?.bg_image || '';
+
+        db.update('content', c => c.id === 1, {
+            title: req.body.title || '',
+            description: req.body.description || '',
+            whatsapp: req.body.whatsapp || '',
+            phone: req.body.phone || '',
+            email: req.body.email || '',
+            address: req.body.address || '',
+            working_hours: req.body.working_hours || '',
+            facebook: req.body.facebook || '',
+            instagram: req.body.instagram || '',
+            twitter: req.body.twitter || '',
+            youtube: req.body.youtube || '',
+            bg_image: bgImage,
+            primary_color: req.body.primary_color || '#f39c12',
+            secondary_color: req.body.secondary_color || '#1a252f'
+        });
         res.redirect('/admin/dashboard?tab=genel&msg=saved');
-    } catch { res.redirect('/admin/dashboard?tab=genel'); }
+    } catch {
+        res.redirect('/admin/dashboard?tab=genel');
+    }
 });
 
 router.post('/change-password', (req, res) => {
-    res.redirect('/admin/dashboard?tab=guvenlik&msg=saved');
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password || new_password.length < 6) {
+        return res.redirect('/admin/dashboard?tab=guvenlik&err=wrong-password');
+    }
+    try {
+        const user = db.find('users', u => u.id === req.session.userId);
+        if (user && bcrypt.compareSync(current_password, user.password)) {
+            db.update('users', u => u.id === req.session.userId, { password: bcrypt.hashSync(new_password, 10) });
+            return res.redirect('/admin/dashboard?tab=guvenlik&msg=saved');
+        }
+    } catch (_) { }
+    res.redirect('/admin/dashboard?tab=guvenlik&err=wrong-password');
 });
 
 router.post('/add-service', upload.single('serviceGorsel'), (req, res) => {
     if (!req.body.title || !req.body.description) return res.redirect('/admin/dashboard?tab=hizmetler');
-    db.prepare('INSERT INTO services (title, description, image) VALUES (?, ?, ?)').run(req.body.title, req.body.description, req.file ? req.file.filename : null);
+    const image = req.file ? req.file.filename : null;
+    db.add('services', { title: req.body.title, description: req.body.description, image });
     res.redirect('/admin/dashboard?tab=hizmetler&msg=saved');
 });
 
 router.post('/delete-service', (req, res) => {
-    if (!req.body.id) return res.redirect('/admin/dashboard?tab=hizmetler');
-    db.prepare('DELETE FROM services WHERE id = ?').run(req.body.id);
+    const id = parseInt(req.body.id);
+    if (!id) return res.redirect('/admin/dashboard?tab=hizmetler');
+    db.remove('services', s => s.id === id);
     res.redirect('/admin/dashboard?tab=hizmetler&msg=saved');
 });
 
 router.post('/add-testimonial', (req, res) => {
     if (!req.body.name || !req.body.comment) return res.redirect('/admin/dashboard?tab=referanslar');
-    db.prepare('INSERT INTO testimonials (name, company, comment, rating) VALUES (?, ?, ?, ?)').run(req.body.name, req.body.company || '', req.body.comment, req.body.rating || 5);
+    db.add('testimonials', { name: req.body.name, company: req.body.company || '', comment: req.body.comment, rating: parseInt(req.body.rating) || 5 });
     res.redirect('/admin/dashboard?tab=referanslar&msg=saved');
 });
 
 router.post('/delete-testimonial', (req, res) => {
-    if (!req.body.id) return res.redirect('/admin/dashboard?tab=referanslar');
-    db.prepare('DELETE FROM testimonials WHERE id = ?').run(req.body.id);
+    const id = parseInt(req.body.id);
+    if (!id) return res.redirect('/admin/dashboard?tab=referanslar');
+    db.remove('testimonials', t => t.id === id);
     res.redirect('/admin/dashboard?tab=referanslar&msg=saved');
 });
 
 router.post('/add-gallery', upload.single('galleryImage'), (req, res) => {
     if (!req.file) return res.redirect('/admin/dashboard?tab=galeri');
-    db.prepare('INSERT INTO gallery (image, caption) VALUES (?, ?)').run(req.file.filename, req.body.caption || '');
+    db.add('gallery', { image: req.file.filename, caption: req.body.caption || '' });
     res.redirect('/admin/dashboard?tab=galeri&msg=saved');
 });
 
 router.post('/delete-gallery', (req, res) => {
-    if (!req.body.id) return res.redirect('/admin/dashboard?tab=galeri');
-    db.prepare('DELETE FROM gallery WHERE id = ?').run(req.body.id);
+    const id = parseInt(req.body.id);
+    if (!id) return res.redirect('/admin/dashboard?tab=galeri');
+    db.remove('gallery', g => g.id === id);
     res.redirect('/admin/dashboard?tab=galeri&msg=saved');
 });
 
 router.post('/add-slide', upload.single('slideImage'), (req, res) => {
     if (!req.file) return res.redirect('/admin/dashboard?tab=slider');
-    db.prepare('INSERT INTO hero_slides (image, title, subtitle, sort_order) VALUES (?, ?, ?, ?)').run(req.file.filename, req.body.title || '', req.body.subtitle || '', req.body.sort_order || 0);
+    db.add('hero_slides', { image: req.file.filename, title: req.body.title || '', subtitle: req.body.subtitle || '', sort_order: parseInt(req.body.sort_order) || 0 });
     res.redirect('/admin/dashboard?tab=slider&msg=saved');
 });
 
 router.post('/delete-slide', (req, res) => {
-    if (!req.body.id) return res.redirect('/admin/dashboard?tab=slider');
-    db.prepare('DELETE FROM hero_slides WHERE id = ?').run(req.body.id);
+    const id = parseInt(req.body.id);
+    if (!id) return res.redirect('/admin/dashboard?tab=slider');
+    db.remove('hero_slides', s => s.id === id);
     res.redirect('/admin/dashboard?tab=slider&msg=saved');
 });
 
 router.post('/update-seo', (req, res) => {
     try {
-        const row = db.prepare('SELECT id FROM seo WHERE page = ?').get('home');
-        if (row) db.prepare('UPDATE seo SET meta_title=?,meta_description=?,meta_keywords=? WHERE page=?').run(req.body.meta_title, req.body.meta_description, req.body.meta_keywords, 'home');
-        else db.prepare('INSERT INTO seo (meta_title,meta_description,meta_keywords,page) VALUES (?,?,?,?)').run(req.body.meta_title, req.body.meta_description, req.body.meta_keywords, 'home');
+        const existing = db.find('seo', s => s.page === 'home');
+        if (existing) {
+            db.update('seo', s => s.page === 'home', { meta_title: req.body.meta_title, meta_description: req.body.meta_description, meta_keywords: req.body.meta_keywords });
+        } else {
+            db.add('seo', { page: 'home', meta_title: req.body.meta_title, meta_description: req.body.meta_description, meta_keywords: req.body.meta_keywords });
+        }
         res.redirect('/admin/dashboard?tab=seo&msg=saved');
-    } catch { res.redirect('/admin/dashboard?tab=seo'); }
+    } catch {
+        res.redirect('/admin/dashboard?tab=seo');
+    }
 });
 
 module.exports = router;
