@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -46,6 +47,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // Session yönetimi
 app.use(session({
+    store: new FileStore({ path: path.join(__dirname, 'sessions'), ttl: 86400, reapInterval: 3600 }),
     secret: process.env.SESSION_SECRET || 'ako-vinc-production-secret-2026',
     resave: false,
     saveUninitialized: false,
