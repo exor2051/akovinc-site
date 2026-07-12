@@ -1,12 +1,16 @@
 const db = require('./database');
 const bcrypt = require('bcryptjs');
 
-db.serialize(async () => {
-    const hash = await bcrypt.hash('123456', 10);
-    
-    db.run(`INSERT OR IGNORE INTO users (id, username, password) VALUES (1, 'admin', ?)`, [hash]);
+const hash = bcrypt.hashSync('123456', 10);
 
-    db.run(`INSERT OR IGNORE INTO content (id, title, description, whatsapp, phone, email, address, working_hours, facebook, instagram, twitter, youtube, bg_image, primary_color, secondary_color) VALUES (1,
+const userExists = db.prepare('SELECT id FROM users WHERE id = 1').get();
+if (!userExists) {
+    db.prepare('INSERT INTO users (id, username, password) VALUES (1, ?, ?)').run('admin', hash);
+}
+
+const contentExists = db.prepare('SELECT id FROM content WHERE id = 1').get();
+if (!contentExists) {
+    db.prepare(`INSERT INTO content (id, title, description, whatsapp, phone, email, address, working_hours, facebook, instagram, twitter, youtube, bg_image, primary_color, secondary_color) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         'Ako Vinç Hizmetleri',
         'Ağır yüklerinizi güvenle taşıyor, projelerinize güç katıyoruz. 7/24 profesyonel hizmet.',
         '905551234567',
@@ -21,14 +25,25 @@ db.serialize(async () => {
         '',
         '#f39c12',
         '#1a252f'
-    )`);
+    );
+}
 
-    db.run(`INSERT OR IGNORE INTO services (id, title, description, image) VALUES (1, 'Sepetli Vinç', 'Yüksek katlı cephe işlemleri ve montaj için ideal çözüm.', '')`);
-    db.run(`INSERT OR IGNORE INTO services (id, title, description, image) VALUES (2, 'Mobil Vinç', 'Her türlü arazi koşulunda çalışabilen mobil vinç hizmeti.', '')`);
-    db.run(`INSERT OR IGNORE INTO services (id, title, description, image) VALUES (3, 'Kule Vinç', 'İnşaat projeleriniz için uzun vadeli kule vinç kiralama.', '')`);
+const svcCount = db.prepare('SELECT COUNT(*) as c FROM services').get();
+if (svcCount.c === 0) {
+    const insert = db.prepare('INSERT INTO services (title, description, image) VALUES (?, ?, ?)');
+    insert.run('Sepetli Vinç', 'Yüksek katlı cephe işlemleri ve montaj için ideal çözüm.', '');
+    insert.run('Mobil Vinç', 'Her türlü arazi koşulunda çalışabilen mobil vinç hizmeti.', '');
+    insert.run('Kule Vinç', 'İnşaat projeleriniz için uzun vadeli kule vinç kiralama.', '');
+}
 
-    db.run(`INSERT OR IGNORE INTO seo (page, meta_title, meta_description, meta_keywords) VALUES ('home', 'Ako Vinç - Profesyonel Vinç Hizmetleri', 'Ako Vinç ile ağır yüklerinizi güvenle taşıyın. 7/24 profesyonel vinç kiralama hizmeti.', 'vinç, vinç kiralama, sepetli vinç, mobil vinç, İstanbul vinç')`);
+const seoExists = db.prepare('SELECT id FROM seo WHERE page = ?').get('home');
+if (!seoExists) {
+    db.prepare('INSERT INTO seo (page, meta_title, meta_description, meta_keywords) VALUES (?, ?, ?, ?)').run(
+        'home',
+        'Ako Vinç - Profesyonel Vinç Hizmetleri',
+        'Ako Vinç ile ağır yüklerinizi güvenle taşıyın. 7/24 profesyonel vinç kiralama hizmeti.',
+        'vinç, vinç kiralama, sepetli vinç, mobil vinç, İstanbul vinç'
+    );
+}
 
-
-    console.log('✅ Yeni veritabanı kuruldu!');
-});
+console.log('✅ Veritabanı kuruldu!');
