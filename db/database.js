@@ -15,16 +15,32 @@ const defaults = {
 
 class DB {
     constructor() {
-        this.data = {};
+        this.data = JSON.parse(JSON.stringify(defaults));
         this.load();
+        let changed = false;
+        for (const key of Object.keys(defaults)) {
+            if (!this.data[key]) {
+                this.data[key] = JSON.parse(JSON.stringify(defaults[key]));
+                changed = true;
+            }
+        }
+        const homeSeo = this.data.seo && this.data.seo.find(s => s.page === 'home');
+        if (homeSeo && homeSeo.meta_title === 'Ako Vinç - Profesyonel Vinç Hizmetleri') {
+            Object.assign(homeSeo, JSON.parse(JSON.stringify(defaults.seo[0])));
+            changed = true;
+            console.log('SEO defaults güncellendi.');
+        }
+        if (changed) this.save();
     }
 
     load() {
         try {
             const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-            this.data = JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            for (const key of Object.keys(parsed)) {
+                this.data[key] = parsed[key];
+            }
         } catch {
-            this.data = JSON.parse(JSON.stringify(defaults));
             this.save();
         }
     }
@@ -37,12 +53,8 @@ class DB {
     find(table, fn) { return this.get(table).find(fn) || null; }
     add(table, item) {
         const arr = this.get(table);
-        if (arr.length > 0) {
-            const maxId = arr.reduce((max, x) => Math.max(max, x.id || 0), 0);
-            item.id = maxId + 1;
-        } else {
-            item.id = 1;
-        }
+        const maxId = arr.length > 0 ? arr.reduce((max, x) => Math.max(max, x.id || 0), 0) : 0;
+        item.id = maxId + 1;
         if (!item.created_at) item.created_at = new Date().toISOString();
         arr.push(item);
         this.data[table] = arr;
@@ -70,8 +82,7 @@ class DB {
     first(table) { return this.get(table)[0] || null; }
     all(table, sortFn) {
         const arr = this.get(table);
-        if (sortFn) return arr.sort(sortFn);
-        return arr;
+        return sortFn ? arr.sort(sortFn) : arr;
     }
 }
 
