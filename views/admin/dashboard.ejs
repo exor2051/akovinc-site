@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetim Paneli - Ako Vinç</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #f39c12;
+            --sidebar-bg: #1a252f;
+            --sidebar-width: 260px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            min-height: 100vh;
+            color: #1a1a2e;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header h2 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-header h2 i { color: var(--primary); }
+        .sidebar-header small { color: rgba(255,255,255,0.5); font-size: 0.8rem; }
+
+        .sidebar-nav { padding: 12px 0; flex: 1; }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-nav a:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.08);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        .sidebar-nav a i { width: 20px; text-align: center; }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-footer a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sidebar-footer a:hover { color: #e74c3c; }
+
+        /* Main */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 28px;
+        }
+        .page-header {
+            margin-bottom: 28px;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .page-header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .card-header h3 i { color: var(--primary); margin-right: 8px; }
+        .card-body { padding: 24px; }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        .form-group label i { margin-right: 6px; color: var(--primary); }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background: #f9fafb;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+        input[type="color"] { height: 44px; padding: 4px; cursor: pointer; }
+        textarea { resize: vertical; min-height: 80px; }
+
+        .btn {
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+        .btn-outline { background: transparent; color: #374151; border: 2px solid #e5e7eb; }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+        .btn-block { width: 100%; justify-content: center; }
+
+        /* Tablo */
+        .table { width: 100%; border-collapse: collapse; }
+        .table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .table td {
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #f5f5f5;
+            vertical-align: middle;
+        }
+        .table tr:last-child td { border-bottom: none; }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .list-item:last-child { border-bottom: none; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content { margin-left: 0; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2><i class="fas fa-crane"></i> Ako Vinç</h2>
+        <small>Yönetim Paneli</small>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="?tab=genel" class="<%= activeTab === 'genel' ? 'active' : '' %>">
+            <i class="fas fa-globe"></i> Genel Ayarlar
+        </a>
+        <a href="?tab=iletisim" class="<%= activeTab === 'iletisim' ? 'active' : '' %>">
+            <i class="fas fa-address-card"></i> İletişim & Sosyal
+        </a>
+        <a href="?tab=hizmetler" class="<%= activeTab === 'hizmetler' ? 'active' : '' %>">
+            <i class="fas fa-tools"></i> Hizmetler
+        </a>
+        <a href="?tab=slider" class="<%= activeTab === 'slider' ? 'active' : '' %>">
+            <i class="fas fa-images"></i> Hero Slider
+        </a>
+        <a href="?tab=galeri" class="<%= activeTab === 'galeri' ? 'active' : '' %>">
+            <i class="fas fa-camera"></i> Galeri
+        </a>
+        <a href="?tab=referanslar" class="<%= activeTab === 'referanslar' ? 'active' : '' %>">
+            <i class="fas fa-star"></i> Referanslar
+        </a>
+        <a href="?tab=seo" class="<%= activeTab === 'seo' ? 'active' : '' %>">
+            <i class="fas fa-search"></i> SEO Ayarları
+        </a>
+        <a href="?tab=guvenlik" class="<%= activeTab === 'guvenlik' ? 'active' : '' %>">
+            <i class="fas fa-lock"></i> Güvenlik
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="/" target="_blank"><i class="fas fa-external-link-alt"></i> Siteyi Görüntüle</a>
+        <a href="/admin/logout"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a>
+    </div>
+</aside>
+
+<!-- Main -->
+<main class="main-content">
+    <div class="page-header">
+        <h1><i class="fas fa-cog"></i> Yönetim Paneli</h1>
+        <p>Sitenizin tüm ayarlarını buradan yönetebilirsiniz.</p>
+    </div>
+
+    <% if (errorMsg) { %><div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <%= errorMsg %></div><% } %>
+    <% if (successMsg) { %><div class="alert alert-success"><i class="fas fa-check-circle"></i> <%= successMsg %></div><% } %>
+
+    <!-- GENEL AYARLAR -->
+    <div class="tab-content <%= activeTab === 'genel' ? 'active' : '' %>" data-tab="genel">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-globe"></i> Site Bilgileri & Tema</h3></div>
+            <div class="card-body">
+                <form action="/admin/update" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label><i class="fas fa-building"></i> Firma Adı</label>
+                        <input type="text" name="title" value="<%= content ? content.title : '' %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-align-left"></i> Açıklama</label>
+                        <textarea name="description" rows="3"><%= content ? content.description : '' %></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-palette"></i> Vurgu Rengi</label>
+                            <input type="color" name="primary_color" value="<%= content ? content.primary_color : '#f39c12' %>">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-palette"></i> Koyu Renk</label>
+                            <input type="color" name="secondary_color" value="<%= content ? content.secondary_color : '#1a252f' %>">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-image"></i> Ana Sayfa Arka Plan</label>
+                        <input type="file" name="bgGorsel" accept="image/*">
+                        <% if (content && content.bg_image) { %>
+                            <div style="margin-top: 8px;"><img src="/uploads/<%= content.bg_image %>" style="height:80px;border-radius:8px;object-fit:cover;"></div>
+                        <% } %>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save"></i> Değişiklikleri Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- İLETİŞİM & SOSYAL -->
+    <div class="tab-content <%= activeTab === 'iletisim' ? 'active' : '' %>" data-tab="iletisim">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-address-card"></i> İletişim & Sosyal Medya</h3></div>
+            <div class="card-body">
+                <form action="/admin/update" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fab fa-whatsapp"></i> WhatsApp Numarası</label>
+                            <input type="text" name="whatsapp" value="<%= content ? content.whatsapp : '' %>" placeholder="905551234567">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-phone"></i> Telefon</label>
+                            <input type="text" name="phone" value="<%= content ? content.phone : '' %>" placeholder="0212 555 12 34">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> E-posta</label>
+                            <input type="email" name="email" value="<%= content ? content.email : '' %>" placeholder="info@akovinc.com">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Adres</label>
+                            <input type="text" name="address" value="<%= content ? content.address : '' %>" placeholder="İstanbul, Türkiye">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-clock"></i> Çalışma Saatleri</label>
+                        <input type="text" name="working_hours" value="<%= content ? content.working_hours : '' %>" placeholder="Pazartesi - Cumartesi: 08:00 - 19:00">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fab fa-facebook"></i> Facebook</label>
+                            <input type="url" name="facebook" value="<%= content ? content.facebook : '' %>" placeholder="https://facebook.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fab fa-instagram"></i> Instagram</label>
+                            <input type="url" name="instagram" value="<%= content ? content.instagram : '' %>" placeholder="https://instagram.com/...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fab fa-twitter"></i> Twitter/X</label>
+                            <input type="url" name="twitter" value="<%= content ? content.twitter : '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fab fa-youtube"></i> YouTube</label>
+                            <input type="url" name="youtube" value="<%= content ? content.youtube : '' %>">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save"></i> Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- HİZMETLER -->
+    <div class="tab-content <%= activeTab === 'hizmetler' ? 'active' : '' %>" data-tab="hizmetler">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-plus-circle"></i> Yeni Hizmet Ekle</h3></div>
+            <div class="card-body">
+                <form action="/admin/add-service" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Hizmet Adı</label>
+                            <input type="text" name="title" placeholder="Sepetli Vinç" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Fotoğraf</label>
+                            <input type="file" name="serviceGorsel" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Açıklama</label>
+                        <textarea name="description" rows="2" placeholder="Hizmet açıklaması..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Hizmet Ekle</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-list"></i> Mevcut Hizmetler</h3></div>
+            <div class="card-body">
+                <% if (services.length > 0) { %>
+                    <table class="table">
+                        <thead><tr><th>Görsel</th><th>Başlık</th><th>Açıklama</th><th></th></tr></thead>
+                        <tbody>
+                            <% services.forEach(function(s) { %>
+                                <tr>
+                                    <td>
+                                        <% if (s.image) { %>
+                                            <img src="/uploads/<%= s.image %>" style="width:50px;height:50px;object-fit:cover;border-radius:8px;">
+                                        <% } else { %>
+                                            <div style="width:50px;height:50px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;"><i class="fas fa-truck"></i></div>
+                                        <% } %>
+                                    </td>
+                                    <td><strong><%= s.title %></strong></td>
+                                    <td style="color:#6b7280;font-size:0.85rem;"><%= s.description %></td>
+                                    <td>
+                                        <form action="/admin/delete-service" method="POST" onsubmit="return confirm('Emin misiniz?')">
+                                            <input type="hidden" name="id" value="<%= s.id %>">
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <p style="color:#9ca3af;text-align:center;padding:20px;">Henüz hizmet eklenmemiş.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO SLIDER -->
+    <div class="tab-content <%= activeTab === 'slider' ? 'active' : '' %>" data-tab="slider">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-plus-circle"></i> Yeni Slayt Ekle</h3></div>
+            <div class="card-body">
+                <form action="/admin/add-slide" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Görsel</label>
+                            <input type="file" name="slideImage" accept="image/*" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sıralama</label>
+                            <input type="number" name="sort_order" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Başlık (opsiyonel)</label>
+                        <input type="text" name="title" placeholder="Slayt başlığı...">
+                    </div>
+                    <div class="form-group">
+                        <label>Alt Başlık (opsiyonel)</label>
+                        <input type="text" name="subtitle" placeholder="Slayt alt başlığı...">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Slayt Ekle</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-list"></i> Slaytlar</h3></div>
+            <div class="card-body">
+                <% if (slides.length > 0) { %>
+                    <table class="table">
+                        <thead><tr><th>Görsel</th><th>Başlık</th><th>Sıra</th><th></th></tr></thead>
+                        <tbody>
+                            <% slides.forEach(function(s) { %>
+                                <tr>
+                                    <td><img src="/uploads/<%= s.image %>" style="width:80px;height:50px;object-fit:cover;border-radius:6px;"></td>
+                                    <td><%= s.title || '-' %></td>
+                                    <td><%= s.sort_order %></td>
+                                    <td>
+                                        <form action="/admin/delete-slide" method="POST" onsubmit="return confirm('Emin misiniz?')">
+                                            <input type="hidden" name="id" value="<%= s.id %>">
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <p style="color:#9ca3af;text-align:center;padding:20px;">Henüz slayt eklenmemiş.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- GALERİ -->
+    <div class="tab-content <%= activeTab === 'galeri' ? 'active' : '' %>" data-tab="galeri">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-plus-circle"></i> Yeni Görsel Ekle</h3></div>
+            <div class="card-body">
+                <form action="/admin/add-gallery" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Görsel</label>
+                        <input type="file" name="galleryImage" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Başlık (opsiyonel)</label>
+                        <input type="text" name="caption" placeholder="Görsel başlığı...">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Ekle</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-images"></i> Galeri</h3></div>
+            <div class="card-body">
+                <% if (gallery.length > 0) { %>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">
+                        <% gallery.forEach(function(g) { %>
+                            <div style="position:relative;">
+                                <img src="/uploads/<%= g.image %>" style="width:100%;height:120px;object-fit:cover;border-radius:10px;">
+                                <form action="/admin/delete-gallery" method="POST" style="position:absolute;top:4px;right:4px;">
+                                    <input type="hidden" name="id" value="<%= g.id %>">
+                                    <button type="submit" class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:0.7rem;" onclick="return confirm('Emin misiniz?')"><i class="fas fa-times"></i></button>
+                                </form>
+                                <% if (g.caption) { %><p style="font-size:0.75rem;margin-top:4px;color:#6b7280;"><%= g.caption %></p><% } %>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <p style="color:#9ca3af;text-align:center;padding:20px;">Galeri boş.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- REFERANSLAR -->
+    <div class="tab-content <%= activeTab === 'referanslar' ? 'active' : '' %>" data-tab="referanslar">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-plus-circle"></i> Yeni Referans Ekle</h3></div>
+            <div class="card-body">
+                <form action="/admin/add-testimonial" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ad Soyad</label>
+                            <input type="text" name="name" placeholder="Ahmet Yılmaz" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Firma</label>
+                            <input type="text" name="company" placeholder="XYZ İnşaat">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Yorum</label>
+                        <textarea name="comment" rows="3" placeholder="Müşteri yorumu..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Puan (1-5)</label>
+                        <select name="rating">
+                            <% for (let i = 5; i >= 1; i--) { %>
+                                <option value="<%= i %>"><%= i %> Yıldız</option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Referans Ekle</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-star"></i> Referanslar</h3></div>
+            <div class="card-body">
+                <% if (testimonials.length > 0) { %>
+                    <% testimonials.forEach(function(t) { %>
+                        <div class="list-item">
+                            <div>
+                                <strong><%= t.name %></strong>
+                                <% if (t.company) { %><span style="color:#6b7280;font-size:0.85rem;"> - <%= t.company %></span><% } %>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-top:4px;"><%= t.comment %></p>
+                                <div style="color:var(--primary);font-size:0.8rem;">
+                                    <% for (let i = 0; i < t.rating; i++) { %><i class="fas fa-star"></i><% } %>
+                                </div>
+                            </div>
+                            <form action="/admin/delete-testimonial" method="POST" onsubmit="return confirm('Emin misiniz?')">
+                                <input type="hidden" name="id" value="<%= t.id %>">
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p style="color:#9ca3af;text-align:center;padding:20px;">Henüz referans eklenmemiş.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO -->
+    <div class="tab-content <%= activeTab === 'seo' ? 'active' : '' %>" data-tab="seo">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-search"></i> SEO Ayarları</h3></div>
+            <div class="card-body">
+                <form action="/admin/update-seo" method="POST">
+                    <div class="form-group">
+                        <label>Meta Başlık (Title)</label>
+                        <input type="text" name="meta_title" value="<%= seo ? seo.meta_title : '' %>" placeholder="Ako Vinç - Profesyonel Vinç Hizmetleri">
+                    </div>
+                    <div class="form-group">
+                        <label>Meta Açıklama (Description)</label>
+                        <textarea name="meta_description" rows="2" placeholder="Ako Vinç ile ağır yüklerinizi güvenle taşıyın..."><%= seo ? seo.meta_description : '' %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Anahtar Kelimeler (Keywords)</label>
+                        <input type="text" name="meta_keywords" value="<%= seo ? seo.meta_keywords : '' %>" placeholder="vinç, vinç kiralama, sepetli vinç">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> SEO'yu Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- GÜVENLİK -->
+    <div class="tab-content <%= activeTab === 'guvenlik' ? 'active' : '' %>" data-tab="guvenlik">
+        <div class="card" style="border: 2px solid #ef4444;">
+            <div class="card-header"><h3 style="color:#ef4444;"><i class="fas fa-lock"></i> Şifre Değiştir</h3></div>
+            <div class="card-body">
+                <form action="/admin/change-password" method="POST">
+                    <div class="form-group">
+                        <label>Mevcut Şifre</label>
+                        <input type="password" name="current_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Yeni Şifre</label>
+                        <input type="password" name="new_password" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-key"></i> Şifreyi Güncelle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    document.querySelectorAll('.sidebar-nav a[href^="?tab="]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tab = a.getAttribute('href').split('tab=')[1];
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+            const target = document.querySelector(`.tab-content[data-tab="${tab}"]`);
+            if (target) target.classList.add('active');
+            a.classList.add('active');
+            history.replaceState(null, '', window.location.pathname + '?tab=' + tab);
+        });
+    });
+</script>
+
+</body>
+</html>

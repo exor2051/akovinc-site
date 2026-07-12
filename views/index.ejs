@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= seo && seo.meta_title ? seo.meta_title : content.title %></title>
+    <% if (seo && seo.meta_description) { %><meta name="description" content="<%= seo.meta_description %>"><% } %>
+    <% if (seo && seo.meta_keywords) { %><meta name="keywords" content="<%= seo.meta_keywords %>"><% } %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary: <%= content.primary_color || '#f39c12' %>;
+            --secondary: <%= content.secondary_color || '#1a252f' %>;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-crane"></i>
+                <span><%= content.title %></span>
+            </a>
+            <div class="nav-right">
+                <a href="tel:+<%= content.whatsapp %>" class="nav-phone">
+                    <i class="fas fa-phone-alt"></i>
+                    <span class="hide-mobile"><%= '+90' + (content.whatsapp || '').slice(-10) %></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Slider -->
+    <header class="hero" id="hero">
+        <div class="hero-overlay"></div>
+        <% if (slides && slides.length > 0) { %>
+            <div class="hero-slides">
+                <% slides.forEach(function(slide, i) { %>
+                    <div class="hero-slide <%= i === 0 ? 'active' : '' %>" style="background-image: url('/uploads/<%= slide.image %>');">
+                        <div class="hero-content">
+                            <% if (slide.title) { %><div class="hero-badge"><%= slide.title %></div><% } %>
+                            <h1 class="hero-title"><%= slide.subtitle || content.title %></h1>
+                            <p class="hero-desc"><%= content.description %></p>
+                            <div class="hero-actions">
+                                <a href="https://wa.me/<%= content.whatsapp %>" target="_blank" class="btn btn-primary">
+                                    <i class="fab fa-whatsapp"></i> WhatsApp'tan Ulaşın
+                                </a>
+                                <a href="#services" class="btn btn-outline">
+                                    <i class="fas fa-arrow-down"></i> Hizmetlerimiz
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+            <% if (slides.length > 1) { %>
+                <div class="hero-dots">
+                    <% slides.forEach(function(s, i) { %>
+                        <button class="hero-dot <%= i === 0 ? 'active' : '' %>" data-index="<%= i %>"></button>
+                    <% }); %>
+                </div>
+            <% } %>
+        <% } else { %>
+            <div class="hero-content">
+                <div class="hero-badge">Profesyonel Vinç Hizmetleri</div>
+                <h1 class="hero-title"><%= content.title %></h1>
+                <p class="hero-desc"><%= content.description %></p>
+                <div class="hero-actions">
+                    <a href="https://wa.me/<%= content.whatsapp %>" target="_blank" class="btn btn-primary">
+                        <i class="fab fa-whatsapp"></i> WhatsApp'tan Ulaşın
+                    </a>
+                    <a href="#services" class="btn btn-outline">
+                        <i class="fas fa-arrow-down"></i> Hizmetlerimiz
+                    </a>
+                </div>
+            </div>
+        <% } %>
+        <div class="hero-scroll-indicator">
+            <div class="mouse"><div class="mouse-wheel"></div></div>
+        </div>
+    </header>
+
+    <!-- Services -->
+    <main class="services-section" id="services">
+        <div class="section-header">
+            <span class="section-subtitle">Neler Sunuyoruz</span>
+            <h2 class="section-title">Hizmetlerimiz</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="services-grid">
+            <% if (services && services.length > 0) { %>
+                <% services.forEach(function(service, index) { %>
+                    <div class="service-card" style="--delay: <%= index * 0.1 %>s;">
+                        <div class="service-card-image">
+                            <% if (service.image) { %>
+                                <img src="/uploads/<%= service.image %>" alt="<%= service.title %>" loading="lazy">
+                            <% } else { %>
+                                <div class="service-placeholder"><i class="fas fa-truck"></i></div>
+                            <% } %>
+                            <div class="service-card-icon"><i class="fas fa-crane"></i></div>
+                        </div>
+                        <div class="service-card-body">
+                            <h3><%= service.title %></h3>
+                            <p><%= service.description %></p>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="empty-state"><i class="fas fa-tools"></i><p>Henüz hizmet eklenmedi.</p></div>
+            <% } %>
+        </div>
+    </main>
+
+    <!-- Gallery -->
+    <% if (gallery && gallery.length > 0) { %>
+    <section class="gallery-section">
+        <div class="section-header">
+            <span class="section-subtitle">Görseller</span>
+            <h2 class="section-title">Galeri</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="gallery-grid">
+            <% gallery.forEach(function(g) { %>
+                <a href="/uploads/<%= g.image %>" class="gallery-item" target="_blank">
+                    <img src="/uploads/<%= g.image %>" alt="<%= g.caption || '' %>" loading="lazy">
+                    <% if (g.caption) { %><div class="gallery-caption"><%= g.caption %></div><% } %>
+                </a>
+            <% }); %>
+        </div>
+    </section>
+    <% } %>
+
+    <!-- Testimonials -->
+    <% if (testimonials && testimonials.length > 0) { %>
+    <section class="testimonials-section">
+        <div class="section-header">
+            <span class="section-subtitle">Müşteri Yorumları</span>
+            <h2 class="section-title">Referanslar</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="testimonials-grid">
+            <% testimonials.forEach(function(t) { %>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <% for (let i = 0; i < t.rating; i++) { %><i class="fas fa-star"></i><% } %>
+                    </div>
+                    <p class="testimonial-comment"><%= t.comment %></p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"><%= t.name.charAt(0) %></div>
+                        <div>
+                            <strong><%= t.name %></strong>
+                            <% if (t.company) { %><span><%= t.company %></span><% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </section>
+    <% } %>
+
+    <!-- Info Strip -->
+    <section class="info-strip">
+        <div class="info-strip-grid">
+            <div class="info-item">
+                <i class="fas fa-phone-alt"></i>
+                <div><strong>Telefon</strong><span><%= content.phone || ('+' + content.whatsapp) %></span></div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <div><strong>E-posta</strong><span><%= content.email || 'info@akovinc.com' %></span></div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <div><strong>Adres</strong><span><%= content.address || 'İstanbul' %></span></div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <div><strong>Çalışma Saatleri</strong><span><%= content.working_hours || '7/24 Hizmet' %></span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="cta-bg"></div>
+        <div class="cta-content">
+            <h2>Hemen Teklif Alın</h2>
+            <p>7/24 profesyonel ekibimizle hizmetinizdeyiz.</p>
+            <a href="https://wa.me/<%= content.whatsapp %>" target="_blank" class="btn btn-primary btn-lg">
+                <i class="fab fa-whatsapp"></i> WhatsApp'tan Yazın
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <h3><%= content.title %></h3>
+                <p><%= content.description %></p>
+                <div class="footer-social">
+                    <% if (content.facebook) { %><a href="<%= content.facebook %>" target="_blank"><i class="fab fa-facebook"></i></a><% } %>
+                    <% if (content.instagram) { %><a href="<%= content.instagram %>" target="_blank"><i class="fab fa-instagram"></i></a><% } %>
+                    <% if (content.twitter) { %><a href="<%= content.twitter %>" target="_blank"><i class="fab fa-twitter"></i></a><% } %>
+                    <% if (content.youtube) { %><a href="<%= content.youtube %>" target="_blank"><i class="fab fa-youtube"></i></a><% } %>
+                </div>
+            </div>
+            <div class="footer-contact">
+                <h4>İletişim</h4>
+                <a href="tel:+<%= content.whatsapp %>"><i class="fas fa-phone-alt"></i> +<%= content.whatsapp %></a>
+                <a href="mailto:<%= content.email || '' %>"><i class="fas fa-envelope"></i> <%= content.email || 'info@akovinc.com' %></a>
+                <a href="https://wa.me/<%= content.whatsapp %>" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 <%= content.title %>. Tüm Hakları Saklıdır.</p>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Float -->
+    <a href="https://wa.me/<%= content.whatsapp %>" target="_blank" class="whatsapp-float" aria-label="WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script>
+        // Navbar scroll
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Hero Slider
+        (function() {
+            const slides = document.querySelectorAll('.hero-slide');
+            const dots = document.querySelectorAll('.hero-dot');
+            if (!slides.length) return;
+            let current = 0;
+            function goTo(index) {
+                slides.forEach(s => s.classList.remove('active'));
+                dots.forEach(d => d.classList.remove('active'));
+                slides[index].classList.add('active');
+                dots[index].classList.add('active');
+                current = index;
+            }
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => goTo(parseInt(dot.dataset.index)));
+            });
+            if (slides.length > 1) {
+                setInterval(() => goTo((current + 1) % slides.length), 5000);
+            }
+        })();
+
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.service-card, .testimonial-card, .gallery-item, .info-item').forEach(el => observer.observe(el));
+    </script>
+
+</body>
+</html>
