@@ -10,6 +10,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="canonical" href="https://www.akovinc.com.tr/">
+    <meta name="geo.region" content="TR-20">
+    <meta name="geo.placename" content="Denizli">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "<%= content.title %>",
+        "description": "<%= seo.meta_description || content.description %>",
+        "telephone": "+<%= content.whatsapp %>",
+        "email": "<%= content.email || 'info@akovinc.com' %>",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "<%= content.address || 'Sümer Mah. İzmir Blv.' %>",
+            "addressLocality": "Denizli",
+            "addressRegion": "Merkezefendi",
+            "addressCountry": "TR"
+        },
+        "url": "https://www.akovinc.com.tr",
+        "image": "<%= content.bg_image ? 'https://www.akovinc.com.tr/uploads/' + content.bg_image : '' %>",
+        "priceRange": "TL",
+        "areaServed": ["Denizli", "Merkezefendi", "Pamukkale", "Aydın", "Muğla", "İzmir"]
+    }
+    </script>
     <style>
         :root {
             --primary: <%= content.primary_color || '#f39c12' %>;

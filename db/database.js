@@ -10,7 +10,7 @@ const defaults = {
     gallery: [],
     testimonials: [],
     hero_slides: [],
-    seo: [{ page: 'home', meta_title: 'Ako Vinç - Profesyonel Vinç Hizmetleri', meta_description: 'Ako Vinç ile ağır yüklerinizi güvenle taşıyın.', meta_keywords: 'vinç, vinç kiralama, sepetli vinç, mobil vinç' }]
+    seo: [{ page: 'home', meta_title: 'Denizli Vinç Kiralama | Ako Vinç - Sepetli, Mobil ve Platform Vinç', meta_description: 'Denizli vinç kiralama ihtiyaçlarınız için Ako Vinç profesyonel ekibi ve geniş araç parkuru ile hizmetinizde. Sepetli vinç, mobil vinç, platform vinç kiralama için hemen teklif alın.', meta_keywords: 'denizli vinç kiralama, denizli vinç, sepetli vinç, mobil vinç, platform vinç, kiralık vinç, vinç kiralama denizli, akovinc, denizli vinç firmaları' }]
 };
 
 class DB {
