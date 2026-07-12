@@ -29,14 +29,14 @@
             <div class="nav-right">
                 <a href="tel:+<%= content.whatsapp %>" class="nav-phone">
                     <i class="fas fa-phone-alt"></i>
-                    <span class="hide-mobile"><%= '+90' + (content.whatsapp || '').slice(-10) %></span>
+                    <span class="hide-mobile">+<%= content.phone || ('+90' + (content.whatsapp || '').slice(-10)) %></span>
                 </a>
             </div>
         </div>
     </nav>
 
     <!-- Hero Slider -->
-    <header class="hero" id="hero">
+    <header class="hero" id="hero" style="<%= content.bg_image ? 'background-image: url(/uploads/' + content.bg_image + ');' : '' %>">
         <div class="hero-overlay"></div>
         <% if (slides && slides.length > 0) { %>
             <div class="hero-slides">
@@ -213,7 +213,7 @@
             <div class="footer-contact">
                 <h4>İletişim</h4>
                 <a href="tel:+<%= content.whatsapp %>"><i class="fas fa-phone-alt"></i> +<%= content.whatsapp %></a>
-                <a href="mailto:<%= content.email || '' %>"><i class="fas fa-envelope"></i> <%= content.email || 'info@akovinc.com' %></a>
+                <a href="mailto:<%= content.email || 'info@akovinc.com' %>"><i class="fas fa-envelope"></i> <%= content.email || 'info@akovinc.com' %></a>
                 <a href="https://wa.me/<%= content.whatsapp %>" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
             </div>
         </div>

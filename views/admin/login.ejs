@@ -5,9 +5,12 @@
     <title>Ako Vinç - Yönetici Girişi</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body style="background-color: var(--dark-bg);">
-    <div class="login-container">
-        <h2>Yönetim Paneli</h2>
+<body style="background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div class="login-container" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); width: 100%; max-width: 400px; margin: 20px;">
+        <div style="text-align: center; margin-bottom: 28px;">
+            <i class="fas fa-crane" style="font-size: 2.5rem; color: var(--primary);"></i>
+            <h2 style="margin-top: 12px; color: #1a252f; font-weight: 700;">Yönetim Paneli</h2>
+        </div>
         <% if (error) { %>
             <p style="color: red; font-weight: bold; margin-top: 10px;"><%= error %></p>
         <% } %>
