@@ -3,33 +3,26 @@ const router = express.Router();
 const db = require('../db/database');
 
 router.get('/', (req, res) => {
-    try {
-        const contentRow = db.prepare('SELECT * FROM content WHERE id = 1').get();
-        const servicesRows = db.prepare('SELECT * FROM services').all();
-        const testimonialRows = db.prepare('SELECT * FROM testimonials ORDER BY created_at DESC').all();
-        const galleryRows = db.prepare('SELECT * FROM gallery ORDER BY created_at DESC').all();
-        const slideRows = db.prepare('SELECT * FROM hero_slides ORDER BY sort_order ASC').all();
-        const seoRow = db.prepare('SELECT * FROM seo WHERE page = ?').get('home');
-
-        const siteData = contentRow || {
-            title: 'Ako Vinç', description: '', whatsapp: '',
-            phone: '', email: '', address: '', working_hours: '',
-            facebook: '', instagram: '', twitter: '', youtube: '',
-            bg_image: '', primary_color: '#f39c12', secondary_color: '#1a252f'
-        };
-
-        res.render('index', {
-            content: siteData,
-            services: servicesRows || [],
-            testimonials: testimonialRows || [],
-            gallery: galleryRows || [],
-            slides: slideRows || [],
-            seo: seoRow || {}
+    db.get('SELECT * FROM content WHERE id = 1', (err, contentRow) => {
+        if (err) return res.status(500).send('Sunucu hatası');
+        db.all('SELECT * FROM services', (err, servicesRows) => {
+            if (err) return res.status(500).send('Sunucu hatası');
+            db.all('SELECT * FROM testimonials ORDER BY created_at DESC', (err, testimonialRows) => {
+                if (err) return res.status(500).send('Sunucu hatası');
+                db.all('SELECT * FROM gallery ORDER BY created_at DESC', (err, galleryRows) => {
+                    if (err) return res.status(500).send('Sunucu hatası');
+                    db.all('SELECT * FROM hero_slides ORDER BY sort_order ASC', (err, slideRows) => {
+                        if (err) return res.status(500).send('Sunucu hatası');
+                        db.get('SELECT * FROM seo WHERE page = ?', ['home'], (err, seoRow) => {
+                            if (err) return res.status(500).send('Sunucu hatası');
+                            const siteData = contentRow || { title: 'Ako Vinç', description: '', whatsapp: '', phone: '', email: '', address: '', working_hours: '', facebook: '', instagram: '', twitter: '', youtube: '', bg_image: '', primary_color: '#f39c12', secondary_color: '#1a252f' };
+                            res.render('index', { content: siteData, services: servicesRows || [], testimonials: testimonialRows || [], gallery: galleryRows || [], slides: slideRows || [], seo: seoRow || {} });
+                        });
+                    });
+                });
+            });
         });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Sunucu hatası');
-    }
+    });
 });
 
 module.exports = router;
