@@ -1,10 +1,12 @@
 {
   "name": "akovinc-site",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Ako Vinç kurumsal web sitesi",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "seed": "node db/seed.js",
+    "test": "echo \"No test specified\" && exit 0"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +14,6 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "connect-sqlite3": "^0.9.16",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
@@ -20,5 +21,8 @@
     "helmet": "^8.2.0",
     "multer": "^2.2.0",
     "sqlite3": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

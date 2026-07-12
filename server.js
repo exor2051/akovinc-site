@@ -1,6 +1,5 @@
 const express = require('express');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -8,7 +7,6 @@ const app = express();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Güvenlik Headerları
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -25,30 +23,22 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
-// Rate Limiting - Admin Login
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     message: 'Çok fazla giriş denemesi. Lütfen 15 dakika bekleyin.'
 });
 
-// Şablon Motoru ve Statik Dosyalar
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public'), {
-    index: false,
-    dotfiles: 'deny'
-}));
-
+app.use(express.static(path.join(__dirname, 'public'), { index: false, dotfiles: 'deny' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(express.json({ limit: '1mb' }));
 
-// Oturum Yönetimi (SQLite Store ile - production için güvenli)
 app.use(session({
-    store: new SQLiteStore({ db: 'sessions.db', dir: path.join(__dirname, 'db') }),
     secret: process.env.SESSION_SECRET || 'ako-vinc-production-secret-2026',
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
         secure: isProduction,
         httpOnly: true,
