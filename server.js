@@ -64,20 +64,7 @@ app.use((err, req, res, next) => {
     res.status(500).render('admin/login', { error: 'Bir hata oluştu.' });
 });
 
-// Seed - veritabanı boşsa doldur
-try {
-    const db = require('./db/database');
-    const bcrypt = require('bcryptjs');
-    const user = db.prepare('SELECT id FROM users WHERE id = 1').get();
-    if (!user) {
-        db.prepare('INSERT INTO users (id, username, password) VALUES (1, ?, ?)').run('admin', bcrypt.hashSync('123456', 10));
-        const c = db.prepare('SELECT id FROM content WHERE id = 1').get();
-        if (!c) {
-            db.prepare('INSERT INTO content (id, title, description, whatsapp, phone, primary_color, secondary_color) VALUES (1, ?, ?, ?, ?, ?, ?)').run('Ako Vinç Hizmetleri', 'Ağır yüklerinizi güvenle taşıyor, projelerinize güç katıyoruz.', '905551234567', '0212 555 12 34', '#f39c12', '#1a252f');
-        }
-        console.log('✅ Seed verileri eklendi');
-    }
-} catch (e) { console.log('Seed hatası:', e.message); }
+const db = require('./db/database');
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

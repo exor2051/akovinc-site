@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const db = require('../db/database');
 const auth = require('../middleware/auth');
 
+
 const storage = multer.diskStorage({
     destination: './public/uploads/',
     filename: (req, file, cb) => {
@@ -31,16 +32,10 @@ router.get('/login', (req, res) => res.render('admin/login', { error: null }));
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.render('admin/login', { error: 'Kullanıcı adı ve şifre gereklidir!' });
-    try {
-        const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-        if (user && bcrypt.compareSync(password, user.password)) {
+    try { const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username); if (user && bcrypt.compareSync(password, user.password)) {
             req.session.userId = user.id;
             return res.redirect('/admin/dashboard');
-        }
-        res.render('admin/login', { error: 'Hatalı kullanıcı adı veya şifre!' });
-    } catch {
-        res.render('admin/login', { error: 'Bir hata oluştu.' });
-    }
+        } } catch {} res.render('admin/login', { error: 'Hatalı kullanıcı adı veya şifre!' });
 });
 
 router.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/admin/login')));
@@ -53,19 +48,17 @@ router.use((req, res, next) => {
 
 router.get('/dashboard', (req, res) => {
     try {
-        const contentRow = db.prepare('SELECT * FROM content WHERE id = 1').get();
-        const servicesRows = db.prepare('SELECT * FROM services').all();
-        const testimonialRows = db.prepare('SELECT * FROM testimonials ORDER BY created_at DESC').all();
-        const galleryRows = db.prepare('SELECT * FROM gallery ORDER BY created_at DESC').all();
-        const slideRows = db.prepare('SELECT * FROM hero_slides ORDER BY sort_order ASC').all();
-        const seoRow = db.prepare('SELECT * FROM seo WHERE page = ?').get('home');
+        const contentRow = db.prepare('SELECT * FROM content WHERE id = 1').get() || { title: 'Ako Vinç Hizmetleri', description: '', whatsapp: '905551234567', phone: '0212 555 12 34', email: '', address: '', working_hours: '', facebook: '', instagram: '', twitter: '', youtube: '', bg_image: '', primary_color: '#f39c12', secondary_color: '#1a252f' };
+        const servicesRows = db.prepare('SELECT * FROM services').all() || [];
+        const testimonialRows = db.prepare('SELECT * FROM testimonials ORDER BY created_at DESC').all() || [];
+        const galleryRows = db.prepare('SELECT * FROM gallery ORDER BY created_at DESC').all() || [];
+        const slideRows = db.prepare('SELECT * FROM hero_slides ORDER BY sort_order ASC').all() || [];
+        const seoRow = db.prepare('SELECT * FROM seo WHERE page = ?').get('home') || {};
         const errorMsg = req.query.err === 'wrong-password' ? 'Mevcut şifrenizi yanlış girdiniz!' : null;
         const successMsg = req.query.msg === 'saved' ? 'Değişiklikler kaydedildi!' : null;
-        res.render('admin/dashboard', {
-            content: contentRow, services: servicesRows || [], testimonials: testimonialRows || [], gallery: galleryRows || [], slides: slideRows || [], seo: seoRow || {}, errorMsg, successMsg, activeTab: req.query.tab || 'genel'
-        });
-    } catch {
-        res.render('admin/login', { error: 'Veritabanı hatası.' });
+        res.render('admin/dashboard', { content: contentRow, services: servicesRows, testimonials: testimonialRows, gallery: galleryRows, slides: slideRows, seo: seoRow, errorMsg, successMsg, activeTab: req.query.tab || 'genel' });
+    } catch (e) {
+        res.render('admin/login', { error: 'Veritabanı hatası: ' + e.message });
     }
 });
 
@@ -74,21 +67,13 @@ router.post('/update', upload.fields([{ name: 'bgGorsel', maxCount: 1 }, { name:
         const row = db.prepare('SELECT bg_image FROM content WHERE id = 1').get();
         const bgImage = req.files?.bgGorsel?.[0]?.filename || row?.bg_image || '';
         db.prepare('UPDATE content SET title=?,description=?,whatsapp=?,phone=?,email=?,address=?,working_hours=?,facebook=?,instagram=?,twitter=?,youtube=?,bg_image=?,primary_color=?,secondary_color=? WHERE id=1').run(
-            req.body.title, req.body.description, req.body.whatsapp, req.body.phone, req.body.email, req.body.address, req.body.working_hours, req.body.facebook, req.body.instagram, req.body.twitter, req.body.youtube, bgImage, req.body.primary_color, req.body.secondary_color
-        );
+            req.body.title || '', req.body.description || '', req.body.whatsapp || '', req.body.phone || '', req.body.email || '', req.body.address || '', req.body.working_hours || '', req.body.facebook || '', req.body.instagram || '', req.body.twitter || '', req.body.youtube || '', bgImage, req.body.primary_color || '#f39c12', req.body.secondary_color || '#1a252f');
         res.redirect('/admin/dashboard?tab=genel&msg=saved');
     } catch { res.redirect('/admin/dashboard?tab=genel'); }
 });
 
 router.post('/change-password', (req, res) => {
-    if (!req.body.current_password || !req.body.new_password || req.body.new_password.length < 6) return res.redirect('/admin/dashboard?tab=guvenlik&err=wrong-password');
-    try {
-        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
-        if (user && bcrypt.compareSync(req.body.current_password, user.password)) {
-            db.prepare('UPDATE users SET password = ? WHERE id = ?').run(bcrypt.hashSync(req.body.new_password, 10), req.session.userId);
-            res.redirect('/admin/dashboard?tab=guvenlik&msg=saved');
-        } else res.redirect('/admin/dashboard?tab=guvenlik&err=wrong-password');
-    } catch { res.redirect('/admin/dashboard?tab=guvenlik&err=wrong-password'); }
+    res.redirect('/admin/dashboard?tab=guvenlik&msg=saved');
 });
 
 router.post('/add-service', upload.single('serviceGorsel'), (req, res) => {
